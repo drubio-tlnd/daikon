@@ -6,10 +6,21 @@ import org.talend.maplang.el.parser.model.ELNodeType;
 import org.talend.tql.model.*;
 import org.talend.tql.visitor.IASTVisitor;
 
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class MapLangVisitor implements IASTVisitor<ELNode> {
+
+    private ELNode handleLogicalOperator(Supplier<Expression[]> expressionSource, Supplier<ELNode> mqlLogicalOperator) {
+        Expression[] expressions = expressionSource.get();
+        if (expressions.length == 1) {
+            return expressions[0].accept(this);
+        }
+
+        final ELNode elNode = mqlLogicalOperator.get();
+        Stream.of(expressions).map(e -> e.accept(this)).forEach(elNode::addChild);
+        return elNode;
+    }
 
     @Override
     public ELNode visit(TqlElement elt) {
@@ -20,20 +31,20 @@ public class MapLangVisitor implements IASTVisitor<ELNode> {
     public ELNode visit(ComparisonOperator elt) {
         ComparisonOperator.Enum operator = elt.getOperator();
         switch (operator) {
-            case EQ:
-                return new ELNode(ELNodeType.EQUAL, "=");
-            case LT:
-                return new ELNode(ELNodeType.LOWER_THAN, "<");
-            case GT:
-                return new ELNode(ELNodeType.GREATER_THAN, ">");
-            case NEQ:
-                return new ELNode(ELNodeType.NOT, "!");
-            case LET:
-                return new ELNode(ELNodeType.LOWER_OR_EQUAL, "<=");
-            case GET:
-                return new ELNode(ELNodeType.GREATER_OR_EQUAL, ">=");
-            default:
-                throw new NotImplementedException("No support for " + operator);
+        case EQ:
+            return new ELNode(ELNodeType.EQUAL, "=");
+        case LT:
+            return new ELNode(ELNodeType.LOWER_THAN, "<");
+        case GT:
+            return new ELNode(ELNodeType.GREATER_THAN, ">");
+        case NEQ:
+            return new ELNode(ELNodeType.NOT, "!");
+        case LET:
+            return new ELNode(ELNodeType.LOWER_OR_EQUAL, "<=");
+        case GET:
+            return new ELNode(ELNodeType.GREATER_OR_EQUAL, ">=");
+        default:
+            throw new NotImplementedException("No support for " + operator);
         }
     }
 
@@ -41,15 +52,15 @@ public class MapLangVisitor implements IASTVisitor<ELNode> {
     public ELNode visit(LiteralValue elt) {
         LiteralValue.Enum literal = elt.getLiteral();
         switch (literal) {
-            case QUOTED_VALUE:
-                return new ELNode(ELNodeType.STRING_LITERAL, "'" + elt.getValue() + "'");
-            case INT:
-            case DECIMAL:
-                return new ELNode(ELNodeType.DECIMAL_LITERAL, elt.getValue());
-            case BOOLEAN:
-                return new ELNode(ELNodeType.BOOLEAN_LITERAL, elt.getValue());
-            default:
-                throw new NotImplementedException("No support for " + literal);
+        case QUOTED_VALUE:
+            return new ELNode(ELNodeType.STRING_LITERAL, "'" + elt.getValue() + "'");
+        case INT:
+        case DECIMAL:
+            return new ELNode(ELNodeType.DECIMAL_LITERAL, elt.getValue());
+        case BOOLEAN:
+            return new ELNode(ELNodeType.BOOLEAN_LITERAL, elt.getValue());
+        default:
+            throw new NotImplementedException("No support for " + literal);
         }
     }
 
@@ -65,28 +76,12 @@ public class MapLangVisitor implements IASTVisitor<ELNode> {
 
     @Override
     public ELNode visit(AndExpression elt) {
-        if (elt.getExpressions().length == 1) {
-            return elt.getExpressions()[0].accept(this);
-        }
-
-        final ELNode andNode = new ELNode(ELNodeType.AND, "&&");
-        andNode.addChildren(Stream.of(elt.getExpressions())
-                .map(e -> e.accept(this))
-                .collect(Collectors.toList()));
-        return andNode;
+        return handleLogicalOperator(elt::getExpressions, () -> new ELNode(ELNodeType.AND, "&&"));
     }
 
     @Override
     public ELNode visit(OrExpression elt) {
-        if (elt.getExpressions().length == 1) {
-            return elt.getExpressions()[0].accept(this);
-        }
-
-        final ELNode andNode = new ELNode(ELNodeType.OR, "||");
-        andNode.addChildren(Stream.of(elt.getExpressions())
-                .map(e -> e.accept(this))
-                .collect(Collectors.toList()));
-        return andNode;
+        return handleLogicalOperator(elt::getExpressions, () -> new ELNode(ELNodeType.OR, "||"));
     }
 
     @Override

@@ -11,9 +11,7 @@ public class TqlMapLangBuilderTest {
     @Test
     public void shouldMixMQLandTQL() {
         // Given
-        ScriptNode builtScriptNode = TqlMapLangBuilder.builder()
-                .fromScript("FROM order SELECT {id = order.id}")
-                .where("age = 0")
+        ScriptNode builtScriptNode = TqlMapLangBuilder.builder().fromScript("FROM order SELECT {id = order.id}").where("age = 0")
                 .build();
 
         ScriptNode scriptNode = new MqlParser().parse("FROM order WHERE age = 0 SELECT {id = order.id}");
