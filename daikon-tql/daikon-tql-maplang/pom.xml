@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>daikon-tql</artifactId>
+        <groupId>org.talend.daikon</groupId>
+        <version>3.2.2-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>daikon-tql-maplang</artifactId>
+
+    <properties>
+        <org.talend.maplang.el.version>1.0.2</org.talend.maplang.el.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.talend.daikon</groupId>
+            <artifactId>daikon-tql-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.talend.maplang</groupId>
+            <artifactId>org.talend.maplang.mql.parser</artifactId>
+            <version>${org.talend.maplang.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.talend.maplang</groupId>
+            <artifactId>org.talend.maplang.el.parser</artifactId>
+            <version>${org.talend.maplang.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.talend.daikon</groupId>
+            <artifactId>daikon</artifactId>
+            <version>3.2.2-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>talend_nexus_deployment</id>
+            <url>https://artifacts-zl.talend.com/nexus/content/repositories/releases/</url>
+        </repository>
+    </repositories>
+</project>
