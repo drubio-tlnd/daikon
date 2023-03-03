@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -62,8 +63,14 @@ public class AuditLogTest {
     @Test
     @WithMockUser(username = TENANT_ID)
     public void testAuditLog() {
-        WebTestClientResponse r = given().webTestClient(webTestClient).header(CLIENT_IP.name(), "0.0.0.0.0")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).body(testBody).post("/test");
+
+        doNothing().when(auditLoggerBase).log(any(), any(), contextArgumentCaptor.capture(), any(), any());
+
+        WebTestClientResponse r = given().webTestClient(webTestClient)
+                .header(CLIENT_IP.name(), "0.0.0.0.0")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .body(testBody)
+                .post("/test");
 
         assertEquals(OK.value(), r.getStatusCode());
 
@@ -83,13 +90,21 @@ public class AuditLogTest {
 
         assertFalse(context.get(REQUEST.getId()).contains("secret"));
         assertFalse(context.get(RESPONSE.getId()).contains("secret"));
+
+        assertEquals(OK.value(), r.getStatusCode());
+
+        Mockito.verify(auditLoggerBase).log(any(), any(), any(), any(), any());
     }
 
     @Test
     @WithMockUser(username = TENANT_ID)
     public void testAuditLogOnError() {
-        WebTestClientResponse r = given().webTestClient(webTestClient).header(CLIENT_IP.name(), "0.0.0.0.0")
-                .contentType(MediaType.APPLICATION_JSON_VALUE).body(testBody).put("/test");
+        reset(auditLoggerBase);
+        WebTestClientResponse r = given().webTestClient(webTestClient)
+                .header(CLIENT_IP.name(), "0.0.0.0.0")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .body(testBody)
+                .put("/test");
 
         assertEquals(INTERNAL_SERVER_ERROR.value(), r.getStatusCode());
 
@@ -108,4 +123,13 @@ public class AuditLogTest {
         assertNotNull(context.get(RESPONSE.getId()));
     }
 
+    @Test
+    @WithMockUser(username = TENANT_ID)
+    public void shouldReturn404() {
+        WebTestClientResponse r = given().webTestClient(webTestClient).header(CLIENT_IP.name(), "0.0.0.0.0").get("/404");
+
+        assertEquals(NOT_FOUND.value(), r.getStatusCode());
+
+        Mockito.verify(auditLoggerBase, never()).log(any(), any(), any(), any(), any());
+    }
 }
